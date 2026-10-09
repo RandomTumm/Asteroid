@@ -1,0 +1,1 @@
+on start " uv ven " into "source .venv/bin/activate" into uv main.py run
