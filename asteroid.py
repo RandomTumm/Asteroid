@@ -1,7 +1,7 @@
 from shlex import split
 from logger import log_event
 from circleshape import CircleShape
-from constants import ASTEROID_MIN_RADIUS, LINE_WIDTH
+from constants import ASTEROID_MIN_RADIUS, LINE_WIDTH, PER_SMALL_KILL
 import pygame
 import random
 
@@ -14,11 +14,12 @@ class Asteroid(CircleShape):
 
     def update(self,dt)-> None:
         self.position += self.velocity * dt
+        self.wrap_around()
 
     def split(self):
         self.kill()
         if self.radius <= ASTEROID_MIN_RADIUS:
-            return
+            return PER_SMALL_KILL
         log_event("asteroid_split")
         angle = random.uniform(20,50)
         positive = self.velocity.rotate(angle)

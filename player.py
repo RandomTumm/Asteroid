@@ -7,7 +7,16 @@ class Player(CircleShape):
     def __init__(self, x: float, y: float,) -> None:
         super().__init__(x,y,PLAYER_RADIUS)
         self.rotation = 0
-        self.cooldown = 0 
+        self.timer = 0
+        self.powerup_timer = 0
+
+        
+    def activate_powerup(self, duration=10):
+        self.powerup_timer = duration
+        
+    def collides_with(self, other):
+        return other.collides_with_triangle(self.triangle())
+    
 
     # in the Player class
     def triangle(self) -> list[pygame.Vector2]:
@@ -24,7 +33,7 @@ class Player(CircleShape):
 
     def update(self, dt: float) -> None:
         keys = pygame.key.get_pressed()
-        self.cooldown -= dt
+        self.timer -= dt
 
         if keys[pygame.K_a]:
             self.rotate(-dt)
@@ -33,9 +42,12 @@ class Player(CircleShape):
         if keys[pygame.K_w]:
             self.move(dt)
         if keys[pygame.K_s]:
-            self.move(-dt)
+            self.move(-dt/2)
         if keys[pygame.K_SPACE]:
             self.shoot()
+        self.wrap_around()
+        if self.powerup_timer > 0:
+            self.powerup_timer -= dt
             
                 
            
@@ -49,9 +61,25 @@ class Player(CircleShape):
         self.position += rotated_with_speed_vector
 
     def shoot(self):
-        if self.cooldown > 0:
+        cooldown = PLAYER_SHOOT_COOLDOWN_SECONDS
+        if self.powerup_timer > 0:
+            cooldown /= 2
+
+        if self.timer > 0:
             return
-        self.cooldown = PLAYER_SHOOT_COOLDOWN_SECONDS
+        self.timer = cooldown
+
+        # Single shot vs Triple spread shot
+        if self.powerup_timer > 0:
+            angles = [-35,-15, 0, 15, 35]
+            for offset in angles:
+                self._spawn_shot(self.rotation + offset)
+        else:
+            self._spawn_shot(self.rotation)
+        
+    def _spawn_shot(self, angle):
         shot = Shot(self.position.x, self.position.y)
-        shot.velocity = pygame.Vector2(0,1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
+        shot.velocity = pygame.Vector2(0, 1).rotate(angle) * PLAYER_SHOOT_SPEED
+
+    
         
